@@ -1,0 +1,14 @@
+logpath = "log/"
+id = 105
+[modbus]
+device = "rtu:///dev/com1"
+baudrate = 19200
+parity = "N"
+uid = 1
+debug = false
+log = false
+[stcip]
+debug = true       #Запускать иммитатор
+host = "127.0.0.1"
+port = 1666
+listen = 1667
