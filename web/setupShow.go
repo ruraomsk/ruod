@@ -36,7 +36,7 @@ const setupText = `
 					]
 				},
 				TextView {
-					text = "<b>Изменение настроек связи со СПОТ Utopia </b>",text-align="center",text-size="24px",
+					text = "<b>Изменение настроек связи с Цуетром управления </b>",text-align="center",text-size="24px",
 				},
 				ListLayout {
 					orientation = horizontal, list-column-gap=16px,padding = 16px,
@@ -46,7 +46,7 @@ const setupText = `
 							text = "Устройство",text-size="24px",
 						},
 						EditView{
-							id=idUtopia,type=text
+							id=idUCentral,type=text
 						},
 						TextView {
 							text = "Скорость ",text-size="24px",

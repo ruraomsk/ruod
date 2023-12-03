@@ -3,6 +3,7 @@ package transport
 var Commander chan Command
 var Requester chan Request
 var Sender chan ReplayToServer
+var FromWeb chan Command
 
 const (
 	CodeCallPhase = iota
@@ -25,6 +26,7 @@ func init() {
 	Commander = make(chan Command)
 	Requester = make(chan Request)
 	Sender = make(chan ReplayToServer)
+	FromWeb = make(chan Command)
 }
 
 type Command struct {

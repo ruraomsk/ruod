@@ -1,7 +1,5 @@
 package transport
 
-import "time"
-
 var comOids = []Define{
 	{Code: CodeCallPhase, OID: "1.3.6.1.4.1.1618.3.7.2.11.1"},
 	{Code: CodeCallPlan, OID: "1.3.6.1.4.1.1618.3.7.2.2.1"},
@@ -10,10 +8,14 @@ var comOids = []Define{
 }
 
 func receiverCommands() {
+
 	for {
+		code := <-FromWeb
 		for _, v := range comOids {
-			time.Sleep(time.Second)
-			Commander <- Command{OID: v.OID, Code: v.Code, Value: 1}
+			if code.Code == v.Code {
+				Commander <- Command{OID: v.OID, Code: v.Code, Value: code.Value}
+				break
+			}
 		}
 	}
 }

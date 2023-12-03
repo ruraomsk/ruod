@@ -27,6 +27,9 @@ type StateHard struct {
 	Phase         int    // Номер исполняемой фазы 0 – КК; [1,32] – фаза; 33 — ЖМ; 34 — ОС; 35, 36 – внешний вызов направлений; 255 – промтак
 	SetPhase      int    //Вызванная фаза 0 - нет
 	SetPlan       int    //Вызванный план управления 0 - нет
+	SetDark       bool
+	SetAllRed     bool
+	SetFlashing   bool
 	// typedef enum {					//Идентификаторы событий в логе аварий и в регистре событий
 	// 	ALL_IS_GOOD = 0,			//Все хорошо, нет предупреждений
 	// 	LOW_CURRENT_RED_LAMP,			//Ток через открытый ключ меньше минимального - лампа сгорела, применяется при контроле красных
@@ -89,10 +92,35 @@ func (s *StateHard) getCentral() bool {
 	defer mutex.Unlock()
 	return s.Central
 }
+func (s *StateHard) setAllRed(value bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.SetAllRed = value
+}
+func (s *StateHard) setFlashing(value bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.SetFlashing = value
+}
+func (s *StateHard) setDark(value bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.SetDark = value
+}
 func (s *StateHard) setCentral(set bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	s.Central = set
+}
+func (s *StateHard) setPlan(set int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.SetPlan = set
+}
+func (s *StateHard) setPhase(set int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.SetPhase = set
 }
 
 func (s *StateHard) setLastOperation() {
@@ -186,10 +214,12 @@ func CommandCentral(cmd int, value int) {
 			if !StateHardware.Flashing {
 				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, true}}
 			}
+			StateHardware.setFlashing(true)
 		} else {
 			if StateHardware.Flashing {
 				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 			}
+			StateHardware.setFlashing(false)
 		}
 	case 3:
 		//Переход в  режим КК
@@ -197,10 +227,12 @@ func CommandCentral(cmd int, value int) {
 			if !StateHardware.AllRed {
 				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, true, false}}
 			}
+			StateHardware.setAllRed(true)
 		} else {
 			if StateHardware.AllRed {
 				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 			}
+			StateHardware.setAllRed(false)
 		}
 	case 4:
 		//Переход в  режим ОС
@@ -208,8 +240,12 @@ func CommandCentral(cmd int, value int) {
 			if !StateHardware.Dark {
 				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{true, false, false}}
 			}
+			StateHardware.setDark(true)
 		} else {
-			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+			if StateHardware.Dark {
+				CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+			}
+			StateHardware.setDark(false)
 		}
 	case 5:
 		//Хочет включить план координации
@@ -217,12 +253,14 @@ func CommandCentral(cmd int, value int) {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 		}
 		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(value)}}
+		StateHardware.setPlan(value)
 	case 6:
 		//Хочет включить фазу
 		if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 		}
 		HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{uint16(value)}}
+		StateHardware.setPhase(value)
 	}
 }
 func GetStateHard() StateHard {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ruraomsk/ruod/controller/transport"
@@ -20,6 +21,9 @@ func (r *RepStatus) send() transport.ReplayToServer {
 	s := hardware.GetStateHard()
 	r.Status = int(s.Status[0])
 	return transport.ReplayToServer{Code: transport.CodeReqStatus, Elemets: make([]transport.Element, 0)}
+}
+func (r *RepStatus) ToSting() string {
+	return fmt.Sprintf("%s Статус %d", timeToString(r.Time), r.Status)
 }
 
 // режим работы - 1.3.6.1.4.1.1618.3.6.2.2.2.0
@@ -43,6 +47,9 @@ func (r *RepMajor) send() transport.ReplayToServer {
 	r.Status = int(s.Status[0])
 	return transport.ReplayToServer{Code: transport.CodeReqMajor, Elemets: make([]transport.Element, 0)}
 }
+func (r *RepMajor) ToSting() string {
+	return fmt.Sprintf("%s Состояние %d", timeToString(r.Time), r.Status)
+}
 
 // номер плана - 1.3.6.1.4.1.1618.3.5.2.1.7.0
 // SwarcoUTCSignalGroupPlanNo OBJECT-TYPE
@@ -63,6 +70,9 @@ func (r *RepPlan) send() transport.ReplayToServer {
 	r.Plan = hardware.GetPlan()
 	return transport.ReplayToServer{Code: transport.CodeReqPlan, Elemets: make([]transport.Element, 0)}
 }
+func (r *RepPlan) ToSting() string {
+	return fmt.Sprintf("%s План координации %d", timeToString(r.Time), r.Plan)
+}
 
 // источник плана - 1.3.6.1.4.1.1618.3.7.2.1.3.0
 // SwarcoUTCTrafftechPlanSource OBJECT-TYPE
@@ -81,6 +91,9 @@ type RepSource struct {
 func (r *RepSource) send() transport.ReplayToServer {
 	r.Time = time.Now()
 	return transport.ReplayToServer{Code: transport.CodeReqSource, Elemets: make([]transport.Element, 0)}
+}
+func (r *RepSource) ToSting() string {
+	return fmt.Sprintf("%s Источник %d", timeToString(r.Time), r.Source)
 }
 
 // номер фазы - 1.3.6.1.4.1.1618.3.7.2.11.2.0
@@ -101,6 +114,9 @@ func (r *RepPhase) send() transport.ReplayToServer {
 	r.Time = time.Now()
 	r.Phase = hardware.GetPhase()
 	return transport.ReplayToServer{Code: transport.CodeReqPhase, Elemets: make([]transport.Element, 0)}
+}
+func (r *RepPhase) ToSting() string {
+	return fmt.Sprintf("%s Запрос фазы %d", timeToString(r.Time), r.Phase)
 }
 
 // состояние сигнальных групп - 1.3.6.1.4.1.1618.3.5.2.1.6.0
@@ -128,6 +144,9 @@ func (r *RepSignalGroups) send() transport.ReplayToServer {
 	r.Time = time.Now()
 	return transport.ReplayToServer{Code: transport.CodeReqSignalGroups, Elemets: make([]transport.Element, 0)}
 }
+func (r *RepSignalGroups) ToSting() string {
+	return fmt.Sprintf("%s Сигнальные группы ", timeToString(r.Time))
+}
 
 // тревоги - 1.3.6.1.4.1.1618.3.1.2.2.2.0
 // code=7
@@ -145,4 +164,7 @@ type Alarm struct {
 func (r *RepAlarm) send() transport.ReplayToServer {
 	r.Time = time.Now()
 	return transport.ReplayToServer{Code: transport.CodeReqAlarm, Elemets: make([]transport.Element, 0)}
+}
+func (r *RepAlarm) ToSting() string {
+	return fmt.Sprintf("%s Тревоги ", timeToString(r.Time))
 }

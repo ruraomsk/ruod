@@ -1,9 +1,13 @@
 package web
 
 import (
-	"github.com/anoshenko/rui"
-	"github.com/ruraomsk/ruod/hardware"
+	"fmt"
 	"time"
+
+	"github.com/anoshenko/rui"
+	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/ruod/controller/transport"
+	"github.com/ruraomsk/ruod/hardware"
 )
 
 const controlText = `
@@ -13,7 +17,7 @@ const controlText = `
 			content = [
 				TextView {
 					style=header1,
-					text = "<b>Текущее состояние контроллера</b>",
+					text = "<b>Текущее состояние Центра управления</b>",
 				},
 				ListLayout {
 					orientation = horizontal, list-column-gap=16px,padding = 16px,
@@ -21,37 +25,63 @@ const controlText = `
 					content = [
 						TextView {
 							style=header1,
-							id=idAllRed,text="Кругом Красный"
+							id=nowAllRed,text="Кругом Красный"
 						},
 						TextView {
 							style=header1,
-							id=idFlashing,text="Желтое Мигание"
+							id=nowFlashing,text="Желтое Мигание"
 						},
 						TextView {
 							style=header1,
-							id=idDark,text="Выключено"
+							id=nowDark,text="Выключено"
+						},
+						TextView {
+							style=header1,
+							id=nowPlan,text=""
+						},
+						TextView {
+							style=header1,
+							id=nowPhase,text=""
 						},
 					]
 				},
 				TextView {
 					style=header1,
-					text = "<b>Изменение режима работы контроллера </b>",
+					text = "<b>Команды от имени центра управления </b>",
 				},
 				ListLayout {
 					orientation = horizontal, list-column-gap=16px,padding = 16px,
 					border = _{style=solid,width=4px,color=blue },
 					content = [
 						Button {
-							id=setAllRed,content="Установить Кругом Красный"
+							id=setAllRedOn,content="КК on"
 						},
 						Button {
-							id=setFlashing,content="Установить Желтое Мигание"
+							id=setAllRedOff,content="КК off"
 						},
 						Button {
-							id=setDark,content="Выключить"
+							id=setFlashingOn,content="ЖМ on"
 						},
 						Button {
-							id=setLocal,content="Вернуть в ЛР"
+							id=setFlashingOff,content="ЖМ off"
+						},
+						Button {
+							id=setDarkOn,content="ОС on"
+						},
+						Button {
+							id=setDarkOff,content="ОС off"
+						},
+						Button {
+							id=setPlan,content="Установить План"
+						},
+						NumberPicker {
+							id=idPlan,type=editor,min=0,max=32,value=0
+						},
+						Button {
+							id=setPhase,content="Установить Фазу"
+						},
+						NumberPicker {
+							id=idPhase,type=editor,min=0,max=32,value=0
 						},
 					]
 				},
@@ -64,20 +94,23 @@ func makeViewControl(view rui.View) {
 	defer mutex.Unlock()
 	hs := hardware.GetStateHard()
 	if hs.Dark {
-		rui.Set(view, "idDark", "visibility", "visible")
+		rui.Set(view, "nowDark", "visibility", "visible")
 	} else {
-		rui.Set(view, "idDark", "visibility", "invisible")
+		rui.Set(view, "nowDark", "visibility", "invisible")
 	}
 	if hs.AllRed {
-		rui.Set(view, "idAllRed", "visibility", "visible")
+		rui.Set(view, "nowAllRed", "visibility", "visible")
 	} else {
-		rui.Set(view, "idAllRed", "visibility", "invisible")
+		rui.Set(view, "nowAllRed", "visibility", "invisible")
 	}
 	if hs.Flashing {
-		rui.Set(view, "idFlashing", "visibility", "visible")
+		rui.Set(view, "nowFlashing", "visibility", "visible")
 	} else {
-		rui.Set(view, "idFlashing", "visibility", "invisible")
+		rui.Set(view, "nowFlashing", "visibility", "invisible")
 	}
+	rui.Set(view, "nowPlan", "text", fmt.Sprintf("План %d", hs.Plan))
+	rui.Set(view, "nowPhase", "text", fmt.Sprintf("Фаза %d", hs.Phase))
+
 }
 func updaterControl(view rui.View, session rui.Session) {
 	ticker := time.NewTicker(time.Second)
@@ -103,22 +136,39 @@ func controlKDM(session rui.Session) rui.View {
 	if view == nil {
 		return nil
 	}
-	// rui.Set(view, "setAllRed", rui.ClickEvent, func(rui.View) {
-	// 	hardware.CommandUtopia(4, 0)
-	// 	logger.Info.Printf("Оператор установил КК")
-	// })
-	// rui.Set(view, "setFlashing", rui.ClickEvent, func(rui.View) {
-	// 	hardware.CommandUtopia(3, 0)
-	// 	logger.Info.Printf("Оператор установил ЖМ")
-	// })
-	// rui.Set(view, "setDark", rui.ClickEvent, func(rui.View) {
-	// 	hardware.CommandUtopia(6, 0)
-	// 	logger.Info.Printf("Оператор установил ОС")
-	// })
-	// rui.Set(view, "setLocal", rui.ClickEvent, func(rui.View) {
-	// 	hardware.CommandUtopia(1, 0)
-	// 	logger.Info.Printf("Оператор установил ЛР")
-	// })
+	rui.Set(view, "setAllRedOn", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallAllRed, Value: 1}
+		logger.Info.Printf("Оператор установил КК")
+	})
+	rui.Set(view, "setAllRedOff", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallAllRed, Value: 0}
+		logger.Info.Printf("Оператор отменил КК")
+	})
+	rui.Set(view, "setFlashingOn", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallFlash, Value: 1}
+		logger.Info.Printf("Оператор установил ЖМ")
+	})
+	rui.Set(view, "setFlashingOff", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallFlash, Value: 0}
+		logger.Info.Printf("Оператор отменил ЖМ")
+	})
+	rui.Set(view, "setDarkOn", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallDark, Value: 1}
+		logger.Info.Printf("Оператор установил ОС")
+	})
+	rui.Set(view, "setDarkOff", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallDark, Value: 0}
+		logger.Info.Printf("Оператор отменил ОС")
+	})
+	rui.Set(view, "setPlan", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallPlan, Value: getInteger(rui.Get(view, "idPlan", "value"))}
+		logger.Info.Printf("Оператор вызвал план %d", getInteger(rui.Get(view, "idPlan", "value")))
+	})
+	rui.Set(view, "setPhase", rui.ClickEvent, func(rui.View) {
+		transport.FromWeb <- transport.Command{Code: transport.CodeCallPhase, Value: getInteger(rui.Get(view, "idPhase", "value"))}
+		logger.Info.Printf("Оператор вызвал фазу %d", getInteger(rui.Get(view, "idPhase", "value")))
+	})
+
 	makeViewControl(view)
 	go updaterControl(view, session)
 	return view

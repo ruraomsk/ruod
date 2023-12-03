@@ -111,7 +111,7 @@ func CreateSession(_ rui.Session) rui.SessionContent {
 	sessionContent.pages = []Page{
 		{"Текущее состояние", statusShow, nil},
 		{"Состояние КДМ", statusKDM, nil},
-		{"Ручное управление КДМ", controlKDM, nil},
+		{"Управление центра", controlKDM, nil},
 		{"Настройки", setupShow, nil},
 	}
 

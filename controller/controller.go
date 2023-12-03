@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"sync"
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
@@ -9,13 +10,24 @@ import (
 )
 
 var live chan any
-var rphase RepPhase
-var rplan RepPlan
-var rmajor RepMajor
-var ralarm RepAlarm
-var rsg RepSignalGroups
-var rstatus RepStatus
-var rsource RepSource
+var state StateCentral
+var mutex sync.Mutex
+
+type StateCentral struct {
+	CommandAllRed   int
+	CommandFlashing int
+	CommandDark     int
+	CommandPhase    int
+	CommandPlane    int
+
+	Rphase  RepPhase
+	Rplan   RepPlan
+	Rmajor  RepMajor
+	Ralarm  RepAlarm
+	Rsg     RepSignalGroups
+	Rstatus RepStatus
+	Rsource RepSource
+}
 
 func getDuration() time.Duration {
 	return 60 * time.Second
@@ -65,41 +77,50 @@ func Start() {
 		case command := <-transport.Commander:
 			live <- 0
 			logger.Debug.Printf("command %v", command)
+			mutex.Lock()
 			switch command.Code {
 			case transport.CodeCallAllRed:
 				hardware.CommandCentral(3, command.Value)
+				state.CommandAllRed = command.Value
 			case transport.CodeCallFlash:
 				hardware.CommandCentral(2, command.Value)
+				state.CommandFlashing = command.Value
 			case transport.CodeCallDark:
 				hardware.CommandCentral(4, command.Value)
+				state.CommandDark = command.Value
 			case transport.CodeCallPlan:
 				hardware.CommandCentral(5, command.Value)
+				state.CommandPlane = command.Value
 			case transport.CodeCallPhase:
 				hardware.CommandCentral(6, command.Value)
+				state.CommandPhase = command.Value
 			default:
 				logger.Error.Printf("not command %v", command)
 			}
+			mutex.Unlock()
 		case request := <-transport.Requester:
 			live <- 0
 			logger.Debug.Printf("request %v", request)
+			mutex.Lock()
 			switch request.Code {
 			case transport.CodeReqPhase:
-				transport.Sender <- rphase.send()
+				transport.Sender <- state.Rphase.send()
 			case transport.CodeReqPlan:
-				transport.Sender <- rplan.send()
+				transport.Sender <- state.Rplan.send()
 			case transport.CodeReqStatus:
-				transport.Sender <- rstatus.send()
+				transport.Sender <- state.Rstatus.send()
 			case transport.CodeReqSource:
-				transport.Sender <- rsource.send()
+				transport.Sender <- state.Rsource.send()
 			case transport.CodeReqSignalGroups:
-				transport.Sender <- rsg.send()
+				transport.Sender <- state.Rsg.send()
 			case transport.CodeReqAlarm:
-				transport.Sender <- ralarm.send()
+				transport.Sender <- state.Ralarm.send()
 			case transport.CodeReqMajor:
-				transport.Sender <- rmajor.send()
+				transport.Sender <- state.Rmajor.send()
 			default:
 				logger.Error.Printf("not request %v", request)
 			}
+			mutex.Unlock()
 		}
 	}
 }

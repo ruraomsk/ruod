@@ -14,10 +14,10 @@ var reqOids = []Define{
 
 func receiverRequests() {
 	for {
+		time.Sleep(5 * time.Second)
 		for _, v := range reqOids {
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 			Requester <- Request{Code: v.Code, OID: v.OID}
 		}
 	}
-
 }

@@ -8,10 +8,6 @@ import (
 	"github.com/ruraomsk/ruod/hardware"
 )
 
-// TextView {
-// 	id=idLine3,text = "Line3",text-size="24px",
-// },
-
 const KDMText = `
 ListLayout {
 	style = showPage,
@@ -54,11 +50,11 @@ func makeViewKDM(view rui.View) {
 		source = "внешний"
 	}
 	rui.Set(view, "idHeader", "text", fmt.Sprintf("<b>Текущее состояние КДМ %s</b>", toString(time.Now())))
-	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Связь с КДM</b> %v  <b>Центр</b> %v <b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>", toRussian(hs.Connect), toRussian(hs.Central), toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
-	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>OC</b> %v  <b>KK</b> %v <b>ЖМ</b> %v <b>WatchDog</b> %d <b>План</b> %d <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
-		toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing),
-		hs.WatchDog, hs.Plan, hs.Status,
-		source))
+	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Связь с КДM</b> %v  <b>Центр</b> %v %s <b>Задание: план</b> %d <b>фаза</b> %d <b>ОС</b> %s <b>КК</b> %s <b>ЖМ</b> %s",
+		toRussian(hs.Connect), toRussian(hs.Central), toString(hs.LastOperation), hs.SetPlan, hs.SetPhase, toRussian(hs.SetDark), toRussian(hs.SetAllRed), toRussian(hs.SetFlashing)))
+	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>Состояние: план</b> %d <b>фаза</b> %d <b>OC</b> %v  <b>KK</b> %v <b>ЖМ</b> %v <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
+		hs.Plan, hs.Phase, toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing),
+		hs.Status, source))
 	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Расшифровка статуса : %s </b>", hardware.GetError()))
 	var content [][]any
 	content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
