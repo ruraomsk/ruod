@@ -188,7 +188,7 @@ func Web() {
 		rui.OpenBrowser("http://" + local)
 	}
 	rui.StartApp(addr, CreateSession, rui.AppParams{
-		Title:      "Potop",
+		Title:      "RUOD",
 		Icon:       "icon.png",
 		TitleColor: rui.Color(0xffc0ded9),
 	})
