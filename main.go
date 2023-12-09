@@ -15,7 +15,10 @@ import (
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/ruod/controller"
 	"github.com/ruraomsk/ruod/hardware"
+	"github.com/ruraomsk/ruod/radar"
 	"github.com/ruraomsk/ruod/setup"
+	"github.com/ruraomsk/ruod/stat"
+	"github.com/ruraomsk/ruod/traffic"
 	"github.com/ruraomsk/ruod/web"
 )
 
@@ -49,6 +52,22 @@ func main() {
 	go hardware.Start()
 	time.Sleep(time.Second)
 	go controller.Start()
+
+	isStat := false
+	if setup.Set.ModbusRadar.Radar {
+		go stat.Start(setup.Set.ModbusRadar.Chanels, setup.Set.ModbusRadar.Diaps)
+		go radar.Radar(setup.Set.ModbusRadar.Diap)
+		isStat = true
+	}
+	if setup.Set.TrafficData.Work {
+		go stat.Start(setup.Set.TrafficData.Chanels, setup.Set.TrafficData.Diaps)
+		go traffic.Start(setup.Set.TrafficData.Diap)
+		isStat = true
+	}
+	if !isStat {
+		go stat.NoStatistics()
+	}
+
 	go rui.AddEmbedResources(&resources)
 	go web.Web()
 

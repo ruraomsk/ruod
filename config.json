@@ -1,0 +1,37 @@
+{
+    "modbus": {
+        "device": "rtu:///dev/com1",
+        "baudrate": 19200,
+        "parity": "N",
+        "uid": 1,
+        "debug": false,
+        "log": false
+    },
+    "stcip": {
+        "debug": true,
+        "host": "127.0.0.1",
+        "port": 1666,
+        "listen": 1667
+    },
+    "trafficdata": {
+        "work": true,
+        "debug": true,
+        "host": "127.0.0.1",
+        "port": 1666,
+        "listen": 1667,
+        "chanels": 16,
+        "diaps": 1,
+        "diap": 0
+    },
+    "modbusradar": {
+        "radar": false,
+        "master": true,
+        "debug": true,
+        "host": "127.0.0.1",
+        "port": 15001,
+        "id": 11,
+        "chanels": 16,
+        "diaps": 1,
+        "diap": 0
+    }
+}

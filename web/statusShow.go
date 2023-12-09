@@ -7,7 +7,9 @@ import (
 	"github.com/anoshenko/rui"
 
 	"github.com/ruraomsk/ruod/hardware"
+	"github.com/ruraomsk/ruod/radar"
 	"github.com/ruraomsk/ruod/setup"
+	"github.com/ruraomsk/ruod/traffic"
 )
 
 // border = _{ style = solid, width = 1px, color = darkgray },
@@ -28,6 +30,16 @@ const statusText = `
 				},
 				TextView {
 					id=idModbus,
+					text = "",
+					text-size="24px",
+				},
+				TextView {
+					id=setModbusRadar,
+					text = "",
+					text-size="24px",
+				},
+				TextView {
+					id=setTrafficData,
 					text = "",
 					text-size="24px",
 				},
@@ -60,6 +72,16 @@ func makeViewStatus(view rui.View) {
 		c += "отсутствует"
 	}
 	rui.Set(view, "idModbus", "text", c)
+	if !setup.Set.ModbusRadar.Radar {
+		rui.Set(view, "setModbusRadar", "text", "Оключен прием данных от радаров")
+	} else {
+		rui.Set(view, "setModbusRadar", "text", fmt.Sprintf("От радаров (%s): %s ", radar.GetStatus(), radar.GetValues()))
+	}
+	if !setup.Set.TrafficData.Work {
+		rui.Set(view, "setTrafficData", "text", "Оключен прием данных от TrafficData")
+	} else {
+		rui.Set(view, "setTrafficData", "text", fmt.Sprintf("От TrafficData (%s): %s ", traffic.GetStatus(), traffic.GetValues()))
+	}
 }
 func updaterStatus(view rui.View, session rui.Session) {
 	ticker := time.NewTicker(time.Second)
